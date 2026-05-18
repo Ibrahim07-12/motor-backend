@@ -69,5 +69,6 @@ if (process.env.NODE_ENV !== "production") {
   });
 }
 
-// Export as handler for Vercel serverless functions
-export default (req, res) => app(req, res);
+// Export Express app for Vercel
+// Vercel automatically wraps this as a serverless function
+export default app;
