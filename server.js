@@ -15,12 +15,18 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(helmet());
-app.use(
-  cors({
-    origin: process.env.CORS_ORIGIN?.split(",") || ["http://localhost:3000"],
-    credentials: true,
-  }),
-);
+
+// CORS configuration
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN?.split(",") || ["http://localhost:3000"],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // Enable preflight for all routes
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -53,10 +59,14 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal server error" });
 });
 
-app.listen(PORT, () => {
-  console.log(`\n🚀 Backend server running on http://0.0.0.0:${PORT}`);
-  console.log(`📊 MongoDB: ${process.env.MONGODB_URI?.split("@")[1]}`);
-  console.log(`🌐 CORS: ${process.env.CORS_ORIGIN}\n`);
-});
+// Only start server in development mode
+// Vercel handles startup automatically
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(`\n🚀 Backend server running on http://0.0.0.0:${PORT}`);
+    console.log(`📊 MongoDB: ${process.env.MONGODB_URI?.split("@")[1]}`);
+    console.log(`🌐 CORS: ${process.env.CORS_ORIGIN}\n`);
+  });
+}
 
 export default app;
