@@ -16,6 +16,7 @@ router.post("/upload", async (req, res) => {
       temperature,
       noise,
     } = req.body;
+    const dryRun = req.query.dryRun === "1" || req.body.dryRun === true;
 
     // Validate required fields
     if (!motorId || !timestampMs || !phase) {
@@ -27,12 +28,8 @@ router.post("/upload", async (req, res) => {
     // Calculate aggregated power (sum of 3-phase)
     const totalPower =
       (phase.R?.power || 0) + (phase.S?.power || 0) + (phase.T?.power || 0);
-    const totalCurrent =
-      (phase.R?.current || 0) +
-      (phase.S?.current || 0) +
-      (phase.T?.current || 0);
 
-    // Create sensor reading
+    // Create sensor reading (store per-phase power + totalPower)
     const reading = new SensorReading({
       motorId,
       timestamp: new Date(timestampMs),
@@ -40,7 +37,6 @@ router.post("/upload", async (req, res) => {
       phase,
       power: {
         totalPower,
-        totalCurrent,
       },
       vibration,
       temperature,
@@ -48,11 +44,20 @@ router.post("/upload", async (req, res) => {
       status: "normal",
     });
 
-    await reading.save();
+    if (!dryRun) {
+      await reading.save();
 
-    res.status(201).json({
-      message: "Sensor data saved successfully",
+      res.status(201).json({
+        message: "Sensor data saved successfully",
+        data: reading,
+      });
+      return;
+    }
+
+    res.status(200).json({
+      message: "Sensor data validated successfully (dry run, not saved)",
       data: reading,
+      dryRun: true,
     });
   } catch (error) {
     console.error("Error saving sensor data:", error);
