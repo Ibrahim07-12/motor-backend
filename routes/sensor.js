@@ -91,8 +91,11 @@ router.get("/latest", async (req, res) => {
     const motorId = req.query.motorId || "motor_main_shakeout";
 
     // Priority 1: Check temporary collection first (dry-run data that's fresh)
+    // IMPORTANT: sort by server-side createdAt, not device timestampMs.
+    // ESP32 timestampMs often uses millis() and resets after reboot,
+    // which can make newer data look "older" if sorted by timestampMs.
     let latest = await SensorReadingTemp.findOne({ motorId })
-      .sort({ timestampMs: -1 })
+      .sort({ createdAt: -1 })
       .lean();
 
     if (latest) {
@@ -105,7 +108,7 @@ router.get("/latest", async (req, res) => {
 
     // Priority 2: Fall back to permanent collection if no temp data
     latest = await SensorReading.findOne({ motorId })
-      .sort({ timestampMs: -1 })
+      .sort({ createdAt: -1 })
       .lean();
 
     if (!latest) {
