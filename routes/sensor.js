@@ -1,5 +1,6 @@
 import express from "express";
 import SensorReading from "../models/SensorReading.js";
+import SensorReadingTemp from "../models/SensorReadingTemp.js";
 import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -54,9 +55,27 @@ router.post("/upload", async (req, res) => {
       return;
     }
 
+    // DRY RUN: Save to temporary collection (auto-deletes after 1 hour)
+    const tempReading = new SensorReadingTemp({
+      motorId,
+      timestamp: new Date(timestampMs),
+      timestampMs,
+      phase,
+      power: {
+        totalPower,
+      },
+      vibration,
+      temperature,
+      noise,
+      status: "normal",
+      isDryRun: true,
+    });
+
+    await tempReading.save();
+
     res.status(200).json({
-      message: "Sensor data validated successfully (dry run, not saved)",
-      data: reading,
+      message: "Sensor data validated and saved to test collection (expires in 1 hour)",
+      data: tempReading,
       dryRun: true,
     });
   } catch (error) {
@@ -70,7 +89,21 @@ router.get("/latest", authenticateToken, async (req, res) => {
   try {
     const motorId = req.query.motorId || "motor_main_shakeout";
 
-    const latest = await SensorReading.findOne({ motorId })
+    // Priority 1: Check temporary collection first (dry-run data that's fresh)
+    let latest = await SensorReadingTemp.findOne({ motorId })
+      .sort({ timestampMs: -1 })
+      .lean();
+
+    if (latest) {
+      return res.json({
+        message: "Latest reading retrieved (test/dry-run mode)",
+        data: latest,
+        source: "temporary",
+      });
+    }
+
+    // Priority 2: Fall back to permanent collection if no temp data
+    latest = await SensorReading.findOne({ motorId })
       .sort({ timestampMs: -1 })
       .lean();
 
@@ -81,6 +114,7 @@ router.get("/latest", authenticateToken, async (req, res) => {
     res.json({
       message: "Latest reading retrieved",
       data: latest,
+      source: "permanent",
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
