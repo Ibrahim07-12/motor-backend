@@ -80,8 +80,8 @@ const sensorReadingSchema = new mongoose.Schema(
   },
 );
 
-// TTL Index: Auto-delete old data after 90 days (for free tier optimization)
-sensorReadingSchema.index({ createdAt: 1 }, { expireAfterSeconds: 7776000 });
+// TTL Index: Auto-delete old data after 14 days (for free tier optimization)
+sensorReadingSchema.index({ createdAt: 1 }, { expireAfterSeconds: 1209600 });
 
 // Compound Index for time-series queries
 sensorReadingSchema.index({ motorId: 1, timestampMs: -1 });

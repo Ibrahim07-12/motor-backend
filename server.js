@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 import authRoutes from "./routes/auth.js";
 import sensorRoutes from "./routes/sensor.js";
 import dataRoutes from "./routes/data.js";
+import SensorReading from "./models/SensorReading.js";
 
 dotenv.config();
 
@@ -35,6 +36,11 @@ const connectMongoDB = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log("✓ MongoDB connected");
+
+    // Keep Atlas TTL aligned with the schema so old 90-day indexes are updated.
+    // syncIndexes() is safe here because we only manage a small set of app-owned indexes.
+    await SensorReading.syncIndexes();
+    console.log("✓ SensorReading indexes synced");
   } catch (error) {
     console.error("❌ MongoDB connection failed:", error.message);
     process.exit(1);
