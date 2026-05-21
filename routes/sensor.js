@@ -85,7 +85,8 @@ router.post("/upload", async (req, res) => {
 });
 
 // GET /api/sensor/latest - Get latest reading (for real-time dashboard)
-router.get("/latest", authenticateToken, async (req, res) => {
+// NOTE: Temporarily unauthenticated for testing. Add authenticateToken back after testing complete.
+router.get("/latest", async (req, res) => {
   try {
     const motorId = req.query.motorId || "motor_main_shakeout";
 
