@@ -64,8 +64,8 @@ const sensorReadingSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: 0,
-      max: 130,
-    }, // dB (INMP441)
+      max: 160,
+    }, // dB (INMP441, range 0-160)
 
     // Status & Metadata
     status: {
