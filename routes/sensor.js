@@ -29,10 +29,6 @@ router.post("/upload", async (req, res) => {
     const serverTimestampMs = Date.now();
     const serverTimestamp = new Date(serverTimestampMs);
 
-    // Calculate aggregated power (sum of 3-phase)
-    const totalPower =
-      (phase.R?.power || 0) + (phase.S?.power || 0) + (phase.T?.power || 0);
-
     // Always store to the permanent Atlas collection so dashboards,
     // history, weekly averages, and monthly averages all read the same data.
     const reading = new SensorReading({
@@ -40,9 +36,6 @@ router.post("/upload", async (req, res) => {
       timestamp: serverTimestamp,
       timestampMs: serverTimestampMs,
       phase,
-      power: {
-        totalPower,
-      },
       vibration,
       temperature,
       noise,

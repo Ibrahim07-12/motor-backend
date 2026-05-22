@@ -49,7 +49,12 @@ router.get("/history", authenticateToken, async (req, res) => {
             },
             vibration: { $avg: "$vibration" },
             temperature: { $avg: "$temperature" },
-            power: { $avg: "$power.totalPower" },
+            // Compute average total power on-the-fly as sum of per-phase power
+            power: {
+              $avg: {
+                $add: ["$phase.R.power", "$phase.S.power", "$phase.T.power"]
+              }
+            },
             noise: { $avg: "$noise" },
             count: { $sum: 1 },
           },
@@ -85,7 +90,11 @@ router.get("/history", authenticateToken, async (req, res) => {
             },
             vibration: { $avg: "$vibration" },
             temperature: { $avg: "$temperature" },
-            power: { $avg: "$power.totalPower" },
+            power: {
+              $avg: {
+                $add: ["$phase.R.power", "$phase.S.power", "$phase.T.power"]
+              }
+            },
             noise: { $avg: "$noise" },
             count: { $sum: 1 },
           },
@@ -127,7 +136,11 @@ router.get("/history", authenticateToken, async (req, res) => {
             },
             vibration: { $avg: "$vibration" },
             temperature: { $avg: "$temperature" },
-            power: { $avg: "$power.totalPower" },
+            power: {
+              $avg: {
+                $add: ["$phase.R.power", "$phase.S.power", "$phase.T.power"]
+              }
+            },
             noise: { $avg: "$noise" },
             count: { $sum: 1 },
           },
@@ -186,12 +199,16 @@ router.get("/export", authenticateToken, async (req, res) => {
         .json({ error: "No data found for this date range" });
     }
 
-    // Generate CSV
-    let csv =
-      "Timestamp,Voltage_R,Voltage_S,Voltage_T,Current_R,Current_S,Current_T,Power_R,Power_S,Power_T,Total_Power,Vibration,Temperature,Noise\n";
+    // Generate CSV (only per-phase power; total power computed on export)
+    let csv = "Timestamp,Power_R,Power_S,Power_T,Total_Power,Vibration,Temperature,Noise\n";
 
     data.forEach((row) => {
-      csv += `${new Date(row.timestampMs).toISOString()},${row.phase.R.voltage},${row.phase.S.voltage},${row.phase.T.voltage},${row.phase.R.current},${row.phase.S.current},${row.phase.T.current},${row.phase.R.power},${row.phase.S.power},${row.phase.T.power},${row.power.totalPower},${row.vibration},${row.temperature},${row.noise}\n`;
+      const pr = (row.phase && row.phase.R && row.phase.R.power) || 0;
+      const ps = (row.phase && row.phase.S && row.phase.S.power) || 0;
+      const pt = (row.phase && row.phase.T && row.phase.T.power) || 0;
+      const total = pr + ps + pt;
+
+      csv += `${new Date(row.timestampMs).toISOString()},${pr},${ps},${pt},${total},${row.vibration},${row.temperature},${row.noise}\n`;
     });
 
     res.setHeader("Content-Type", "text/csv");

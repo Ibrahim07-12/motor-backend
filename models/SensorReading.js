@@ -19,33 +19,15 @@ const sensorReadingSchema = new mongoose.Schema(
       index: true,
     },
 
-    // 3-Phase Power Data (PZEM-004T)
+    // 3-Phase Power Data (PZEM-004T) - store only per-phase power
     phase: {
-      R: {
-        voltage: { type: Number, default: 0 },
-        current: { type: Number, default: 0 },
-        power: { type: Number, default: 0 },
-        powerFactor: { type: Number, default: 0 },
-      },
-      S: {
-        voltage: { type: Number, default: 0 },
-        current: { type: Number, default: 0 },
-        power: { type: Number, default: 0 },
-        powerFactor: { type: Number, default: 0 },
-      },
-      T: {
-        voltage: { type: Number, default: 0 },
-        current: { type: Number, default: 0 },
-        power: { type: Number, default: 0 },
-        powerFactor: { type: Number, default: 0 },
-      },
+      R: { power: { type: Number, default: 0 } },
+      S: { power: { type: Number, default: 0 } },
+      T: { power: { type: Number, default: 0 } },
     },
 
     // Aggregated 3-Phase Power
-    power: {
-      totalPower: { type: Number, default: 0 }, // Sum of R+S+T (Watts)
-      totalCurrent: { type: Number, default: 0 }, // Sum of R+S+T (Amps)
-    },
+    // Note: total aggregated power removed — only per-phase `power` is stored
 
     // Other Sensors
     vibration: {
