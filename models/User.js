@@ -30,6 +30,18 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    notificationEmails: {
+      type: [String],
+      default: [],
+      validate: {
+        validator: function (emails) {
+          return emails.every((email) =>
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+          );
+        },
+        message: "Invalid email format in notificationEmails",
+      },
+    },
   },
   {
     timestamps: true,

@@ -88,4 +88,83 @@ router.get("/verify", authenticateToken, (req, res) => {
   });
 });
 
+// GET /api/auth/notification-emails - Get list of notification emails
+router.get("/notification-emails", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("notificationEmails");
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({
+      message: "Notification emails retrieved",
+      emails: user.notificationEmails || [],
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/auth/notification-emails - Add or replace notification emails
+router.post("/notification-emails", authenticateToken, async (req, res) => {
+  try {
+    const { emails } = req.body;
+
+    if (!Array.isArray(emails)) {
+      return res.status(400).json({ error: "emails must be an array" });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalidEmails = emails.filter((email) => !emailRegex.test(email));
+    if (invalidEmails.length > 0) {
+      return res.status(400).json({
+        error: "Invalid email format",
+        invalidEmails,
+      });
+    }
+
+    // Remove duplicates
+    const uniqueEmails = [...new Set(emails)];
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { notificationEmails: uniqueEmails },
+      { new: true }
+    ).select("notificationEmails");
+
+    res.json({
+      message: "Notification emails updated successfully",
+      emails: user.notificationEmails,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/auth/notification-emails/:email - Remove specific email
+router.delete("/notification-emails/:email", authenticateToken, async (req, res) => {
+  try {
+    const { email } = req.params;
+    const decodedEmail = decodeURIComponent(email);
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { $pull: { notificationEmails: decodedEmail } },
+      { new: true }
+    ).select("notificationEmails");
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({
+      message: "Email removed successfully",
+      emails: user.notificationEmails,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
