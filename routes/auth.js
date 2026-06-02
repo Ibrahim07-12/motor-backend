@@ -91,7 +91,8 @@ router.get("/verify", authenticateToken, (req, res) => {
 // GET /api/auth/notification-emails - Get list of notification emails
 router.get("/notification-emails", authenticateToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("notificationEmails");
+    const userId = req.user.id || req.user.userId || req.user._id;
+    const user = await User.findById(userId).select("notificationEmails");
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -127,8 +128,9 @@ router.post("/notification-emails", authenticateToken, async (req, res) => {
     // Remove duplicates
     const uniqueEmails = [...new Set(emails)];
 
+    const userId = req.user.id || req.user.userId || req.user._id;
     const user = await User.findByIdAndUpdate(
-      req.user.id,
+      userId,
       { notificationEmails: uniqueEmails },
       { new: true }
     ).select("notificationEmails");
@@ -148,8 +150,9 @@ router.delete("/notification-emails/:email", authenticateToken, async (req, res)
     const { email } = req.params;
     const decodedEmail = decodeURIComponent(email);
 
+    const userId = req.user.id || req.user.userId || req.user._id;
     const user = await User.findByIdAndUpdate(
-      req.user.id,
+      userId,
       { $pull: { notificationEmails: decodedEmail } },
       { new: true }
     ).select("notificationEmails");
