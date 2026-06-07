@@ -25,6 +25,7 @@
     "helmet": "^7.0.0",
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.0.0",
+    "mqtt": "^5.15.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

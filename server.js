@@ -56,7 +56,9 @@ app.use("/api/data", dataRoutes);
 
 // Health check
 app.get("/", (req, res) => {
-  res.json({ status: "Motor Monitoring Backend is running ✓" });
+  res.json({
+    status: "Motor Monitoring Backend is running",
+  });
 });
 
 // Error handling middleware
