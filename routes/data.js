@@ -56,10 +56,19 @@ router.get("/history", authenticateToken, async (req, res) => {
             },
             vibration: { $avg: "$vibration" },
             temperature: { $avg: "$temperature" },
-            // Compute average total power on-the-fly as sum of per-phase power
+            // Compute average total power (ONLY when motor operating > 1000W)
             power: {
               $avg: {
-                $add: ["$phase.R.power", "$phase.S.power", "$phase.T.power"]
+                $cond: [
+                  {
+                    $gte: [
+                      { $add: ["$phase.R.power", "$phase.S.power", "$phase.T.power"] },
+                      1000
+                    ]
+                  },
+                  { $add: ["$phase.R.power", "$phase.S.power", "$phase.T.power"] },
+                  null
+                ]
               }
             },
             noise: { $avg: "$noise" },
@@ -97,9 +106,19 @@ router.get("/history", authenticateToken, async (req, res) => {
             },
             vibration: { $avg: "$vibration" },
             temperature: { $avg: "$temperature" },
+            // Compute average total power (ONLY when motor operating > 1000W)
             power: {
               $avg: {
-                $add: ["$phase.R.power", "$phase.S.power", "$phase.T.power"]
+                $cond: [
+                  {
+                    $gte: [
+                      { $add: ["$phase.R.power", "$phase.S.power", "$phase.T.power"] },
+                      1000
+                    ]
+                  },
+                  { $add: ["$phase.R.power", "$phase.S.power", "$phase.T.power"] },
+                  null
+                ]
               }
             },
             noise: { $avg: "$noise" },
@@ -164,14 +183,12 @@ router.get("/export", authenticateToken, async (req, res) => {
       const pr = (row.phase && row.phase.R && row.phase.R.power) || 0;
       const ps = (row.phase && row.phase.S && row.phase.S.power) || 0;
       const pt = (row.phase && row.phase.T && row.phase.T.power) || 0;
-      const total = pr + ps + pt;
 
       return {
         Timestamp: new Date(row.timestampMs).toISOString(),
         Power_R: pr,
         Power_S: ps,
         Power_T: pt,
-        Total_Power: total,
         Vibration: row.vibration,
         Temperature: row.temperature,
         Noise: row.noise,
