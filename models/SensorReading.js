@@ -34,13 +34,13 @@ const sensorReadingSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: 0,
-      max: 150,
+      max: 100,
     }, // m/s² (Gravity Piezo)
     temperature: {
       type: Number,
       default: 0,
-      min: -10,
-      max: 150,
+      min: 0,
+      max: 1024,
     }, // °C (MAX6675)
     noise: {
       type: Number,
