@@ -18,8 +18,20 @@ const PORT = process.env.PORT || 5000;
 app.use(helmet());
 
 // CORS configuration
+const defaultCorsOrigins = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:5173",
+];
+
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN?.split(",") || ["http://localhost:3000"],
+  origin: [
+    ...(process.env.CORS_ORIGIN?.split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean) || []),
+    ...defaultCorsOrigins,
+  ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
